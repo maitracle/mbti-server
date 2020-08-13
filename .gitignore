@@ -1,0 +1,7 @@
+.idea
+
+.python-version
+
+*.http
+
+__pycache__
