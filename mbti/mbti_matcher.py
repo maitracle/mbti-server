@@ -4,9 +4,9 @@ from datetime import datetime
 mbti_map = {
     'INFP': ['ENFJ', 'ENTJ'],
     'ENFP': ['INFJ', 'INTJ'],
-    'INFJ': ['ENFP', 'ENTP'],
+    'INFJ': ['ENTP', 'ENFP'],
     'ENFJ': ['INFP', 'ISFP'],
-    'INTJ': ['ENFP', 'ENTP'],
+    'INTJ': ['ENTP', 'ENFP'],
     'ENTJ': ['INFP', 'INTP'],
     'INTP': ['ENTJ', 'ESTJ'],
     'ENTP': ['INFJ', 'INTJ'],
@@ -27,6 +27,10 @@ def get_today_date_string():
     return f'{today.year}-{today.month}-{today.day}'
 
 
+def get_opposite_gender(gender):
+    return 'MALE' if gender == 'FEMALE' else 'FEMALE'
+
+
 class MbtiMatcher:
 
     @classmethod
@@ -39,13 +43,24 @@ class MbtiMatcher:
         today_string = get_today_date_string()
 
         today_match_log = db.match_log.find_one({
-            'username': user.username,
+            'request_user': user.username,
             'date': today_string,
         })
+
         return today_match_log is None
 
     @classmethod
-    def get_matched_user(cls, mbti_list, target_gender):
+    def is_already_matched(cls, request_user, target_user):
+        from mbti.app import db
+        matched_log = db.match_log.find_one({
+            request_user.gender: request_user.username,
+            target_user['gender']: target_user['username'],
+        })
+
+        return matched_log is not None
+
+    @classmethod
+    def get_matched_user(cls, mbti_list, request_user, target_gender):
         from mbti.app import db
 
         inf = 987654321
@@ -54,12 +69,15 @@ class MbtiMatcher:
         }
 
         for mbti in mbti_list:
-            users = db.users.find({'mbti': mbti, 'gender': target_gender}, {'_id': False, 'password': False}).sort(
-                'view_count', 1)
+            candidate_users = db.users.find({'mbti': mbti, 'gender': target_gender}, {'_id': False, 'password': False})\
+                .sort('view_count', 1)
 
-            for user in users:
-                if matched_user['view_count'] > user['view_count']:
-                    matched_user = user
+            for candidate in candidate_users:
+                if cls.is_already_matched(request_user, candidate):
+                    continue
+
+                if matched_user['view_count'] > candidate['view_count']:
+                    matched_user = candidate
                 break
 
         if matched_user['view_count'] is not inf:
@@ -75,7 +93,9 @@ class MbtiMatcher:
         today_string = get_today_date_string()
 
         db.match_log.insert_one({
-            'username': user.username,
+            'request_user': user.username,
+            user.gender: user.username,
+            get_opposite_gender(user.gender): matched_user['username'],
             'date': today_string,
         })
 
@@ -86,8 +106,8 @@ class MbtiMatcher:
     def match(cls, user):
         mbti = user.mbti
         mbti_list = cls.get_matched_mbti_list(mbti)
-        opposite_gender = 'MALE' if user.gender is 'FEMALE' else 'FEMALE'
-        matched_user = cls.get_matched_user(mbti_list, opposite_gender)
+        opposite_gender = get_opposite_gender(user.gender)
+        matched_user = cls.get_matched_user(mbti_list, user, opposite_gender)
         cls.create_match_log(user, matched_user)
 
         return matched_user

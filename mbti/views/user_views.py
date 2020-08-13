@@ -16,7 +16,7 @@ def get_token():
 
     token = User.get_token(username, raw_password)
 
-    if token is '':
+    if token == '':
         return jsonify({'msg': '아이디, 혹은 비밀번호가 정확하지 않습니다.'}), 401
 
     return jsonify(token=token), 200
