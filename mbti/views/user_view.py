@@ -11,18 +11,16 @@ user_view = Blueprint('user_view', __name__)
 def get_token():
     if not request.is_json:
         return jsonify({'message': 'Missing JSON in request'}), 400
-    #
+
     username = request.json.get('username', None)
     raw_password = request.json.get('password', None)
 
-    if not User.is_valid_password(username, raw_password):
+    token = User.get_token(username, raw_password)
+
+    if token is '':
         return jsonify({'message': '아이디, 혹은 비밀번호가 정확하지 않습니다.'}), 401
 
-
-
-    access_token = create_access_token(identity=username)
-    return f'this is another file, token: {access_token}'
-    # return jsonify(access_token=access_token), 200
+    return jsonify(token=token), 200
 
 
 @user_view.route('/api/users', methods=['POST'])

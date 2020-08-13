@@ -1,3 +1,5 @@
+import bcrypt
+from flask_jwt_extended import create_access_token
 
 
 class User:
@@ -27,7 +29,12 @@ class User:
 
     @staticmethod
     def get_encrypted_password(raw_password):
-        return raw_password
+        password = bcrypt.hashpw(
+            raw_password.encode('UTF-8'),
+            bcrypt.gensalt()
+        )
+
+        return password
 
     @staticmethod
     def is_exist_username(username):
@@ -37,8 +44,15 @@ class User:
 
     @classmethod
     def is_valid_password(cls, username, password):
-        return True
+        from mbti.app import db
+        hashed_password = db.users.find_one({'username': username})['password']
+        is_valid = bcrypt.checkpw(password.encode('UTF-8'), hashed_password)
+
+        return is_valid
 
     @classmethod
     def get_token(cls, username, password):
-        return 'asdf'
+        if not cls.is_exist_username(username) or not cls.is_valid_password(username, password):
+            return ''
+
+        return create_access_token(identity=username)
