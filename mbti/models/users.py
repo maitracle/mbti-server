@@ -1,3 +1,5 @@
+import datetime
+
 import bcrypt
 from flask_jwt_extended import create_access_token
 
@@ -27,6 +29,15 @@ class User:
 
         db.users.insert_one(doc)
 
+    @classmethod
+    def get_user_by_username(cls, username):
+        from mbti.app import db
+
+        if not cls.is_exist_username(username):
+            raise ValueError('username가 존재하지 않습니다.')
+
+        return cls(db.users.find_one({'username': username}, {'_id': False}))
+
     @staticmethod
     def get_encrypted_password(raw_password):
         password = bcrypt.hashpw(
@@ -55,4 +66,4 @@ class User:
         if not cls.is_exist_username(username) or not cls.is_valid_password(username, password):
             return ''
 
-        return create_access_token(identity=username)
+        return create_access_token(identity=username, expires_delta=datetime.timedelta(days=1))
