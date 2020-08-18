@@ -1,5 +1,7 @@
 from datetime import datetime
 
+import pymongo
+
 
 mbti_map = {
     'INFP': ['ENFJ', 'ENTJ'],
@@ -70,7 +72,7 @@ class MbtiMatcher:
 
         for mbti in mbti_list:
             candidate_users = db.users.find({'mbti': mbti, 'gender': target_gender}, {'_id': False, 'password': False})\
-                .sort('view_count', 1)
+                .sort([("view_count", pymongo.ASCENDING)])
 
             for candidate in candidate_users:
                 if cls.is_already_matched(request_user, candidate):
