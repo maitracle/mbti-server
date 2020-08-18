@@ -1,4 +1,5 @@
 from flask import Flask
+from flask_cors import CORS
 from flask_jwt_extended import JWTManager
 from pymongo import MongoClient
 
@@ -7,8 +8,11 @@ from mbti.views.user_views import user_views
 
 
 app = Flask(__name__)
+
 app.register_blueprint(user_views)
 app.register_blueprint(mbti_matcher_views)
+
+CORS(app)
 
 production_db_info = 'mongodb://mbti-admin:TbP26SgDba7ZbEVpmrJMxJqTHfZsCcpj@13.124.34.75'
 dev_db_info = 'localhost'
