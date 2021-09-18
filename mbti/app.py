@@ -20,7 +20,7 @@ dev_db_info = 'localhost'
 client = MongoClient(dev_db_info, 27017)
 db = client.db_mbti
 
-app.config['JWT_SECRET_KEY'] = 'g#*5q+!l0tglppmfq9gq-h7w3o(7te**j8jjq8rsqad^&nbjcd'  # Change this!
+app.config['JWT_SECRET_KEY'] = 'XXXXX'  # Todo(maitracle): secret key를 환경변수에서 가져오게 수정한다.
 jwt = JWTManager(app)
 
 if __name__ == '__main__':
